@@ -41,11 +41,24 @@ class Sender(BasicSender.BasicSender):
             seqno +=1
             while not message == "end":
                 for i in range(window_base, window_max + 1):
-                    if i != max_seqno:
-                        self.acks_received[i] = 0
-                        new_packet = self.make_packet(message, seqno, data)
+                    # if i != max_seqno:
+                    #     new_packet = self.make_packet(message, seqno, data)
+                    #     window[i] = new_packet
+                    #     self.send(new_packet)
+                    if (i == max_seqno):
+                        message = "end"
+                    if (i not in window.keys() && i not > max_seqno):
+                        new_packet = self.make_packet(message, i, data)
+                        window[i] = new_packet
                         self.send(new_packet)
-                    else:
+                        if (i+1 == max_seqno):
+                            data = self.infile.read(self.file_len % 1472)
+                        else:
+                            data = self.infile.read(1472)
+                response = self.receive(500)
+                self.handle_response(response)
+
+
 
 
 
