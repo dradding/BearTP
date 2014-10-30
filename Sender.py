@@ -58,17 +58,6 @@ class Sender(BasicSender.BasicSender):
                 response = self.receive(500)
                 self.handle_response(response)
 
-
-
-
-
-
-
-
-
-
-
-
     def handle_response(self, response_packet):
         if response_packet == None:           
             self.handle_timeout
