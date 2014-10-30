@@ -47,7 +47,7 @@ class Sender(BasicSender.BasicSender):
                     #     self.send(new_packet)
                     if (i == max_seqno):
                         message = "end"
-                    if (i not in window.keys() && i not > max_seqno):
+                    if (not i  in window.keys() && not i  > max_seqno):
                         new_packet = self.make_packet(message, i, data)
                         window[i] = new_packet
                         self.send(new_packet)
