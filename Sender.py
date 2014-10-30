@@ -13,10 +13,11 @@ class Sender(BasicSender.BasicSender):
         if sackMode:
             raise NotImplementedError #remove this line when you implement SACK
         self.file_len = len(self.infile)
-        window_base = 0
-        window_max = 4
-        max_seqno = self.file_len/1472
-        acks_received = {}
+        self.window_base = 0
+        self.window_max = 4
+        self.max_seqno = self.file_len/1472
+        self.acks_received = {}
+        self.window = {}
 
 
     # Main sending loop.
