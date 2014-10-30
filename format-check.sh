@@ -16,10 +16,10 @@ fail()
 {
   echo "---------------------------------------------------------------"
   echo "Improperly formatted tar file!"
-  echo "The tar file should contain Sender.py and a README.txt file"
+  echo "The tar file should contain Sender.py and a README file"
   echo "Example:"
   echo " $ cd bears-tp"
-  echo " $ tar -cf project2-obama-biden.tar Sender.py README.txt"
+  echo " $ tar -cf project2-obama-biden.tar Sender.py README"
   echo "---------------------------------------------------------------"
   if [ -f FormatCheckSender.py ]; then
     rm FormatCheckSender.py
@@ -40,11 +40,11 @@ else
   echo "Found Sender.py"
   cp temp-project-directory/Sender.py FormatCheckSender.py
 fi
-if [ ! -f temp-project-directory/README.txt ]; then
-  echo "README.txt not found!"
+if [ ! -f temp-project-directory/README ]; then
+  echo "README not found!"
   FAIL=1
 else
-  echo "Found README.txt"
+  echo "Found README"
 fi
 rm -rf temp-project-directory
 if [ $FAIL == 1 ]; then
