@@ -16,7 +16,7 @@ class Sender(BasicSender.BasicSender):
         self.window_base = 0
         self.window_max = 4
         self.max_seqno = self.file_len/1472
-        self.acks_received = {}
+        self.current_ack = [-1,-1] #[seqno, repitions]
         self.window = {}
 
 
@@ -57,11 +57,18 @@ class Sender(BasicSender.BasicSender):
 
 
     def handle_response(self, response_packet):
-        pass
+        if response_packet == None:           
+            self.handle_timeout
+        else:
+            if Checksum.validate_checksum(response_packet):
+                msg_type, seqno, data, checksum = self.split_packet(response_packet)
+                if seqno > self.current_ack[0]:
+                    self.handle_new_ack(seqno)
+                if seqno == self.current_ack[0]:
+                    self.handle_dup_ack(seqno)
 
     def handle_timeout(self):
-        #resend
-        pass
+        self.send(self.window[self.window_base])
 
     def handle_new_ack(self, ack):
         self.window_open = 106
@@ -69,9 +76,8 @@ class Sender(BasicSender.BasicSender):
 
     def handle_dup_ack(self, ack):
         self.current_ack[1] += 1
-        if self.current_ack[1] == 4:
-            #trigger resend
-        pass
+        if self.current_ack[1] == 3:
+            self.send(self.window[self.window_base])
 
     def log(self, msg):
         if self.debug:
