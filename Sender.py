@@ -13,53 +13,50 @@ class Sender(BasicSender.BasicSender):
         if sackMode:
             raise NotImplementedError #remove this line when you implement SACK
         self.file_len = len(self.infile)
-        self.window_open = 0
-        self.window_close = 0
-        self.current_ack = [0,0] #[ack, number of times recieved]
-        self.finished = False
-        self.last_packet = self.file_len/1472
+        window_base = 0
+        window_max = 4
+        max_seqno = self.file_len/1472
+        acks_received = {}
+
 
     # Main sending loop.
     def start(self):
+        message = "start"
+        seqno = 0
+        if (max_seqno == 0): #the size of the file can be handled in one send call
+            data = self.infile.read(self.file_len % 1472)
+            new_packet = self.make_packet(message, seqno, data)
+            self.send(new_packet)
+            response = self.receive(500)
+            handle_response(response)
 
-        if self.file_len > 1471:
-            msg = self.infile.read(1472)
         else:
-            msg = self.infile.read(self.file_len)
+            data = self.infile.read(1472)
+            self.make_packet(message, seqno, None) #send start message first 
+            self.send(new_packet)
+            response = self.receive(500)
+            handle_response(response)
+            message = "data"
+            seqno +=1
+            while not message == "end":
+                for i in range(window_base, window_max + 1):
+                    if i != max_seqno:
+                        self.acks_received[i] = 0
+                        new_packet = self.make_packet(message, seqno, data)
+                        self.send(new_packet)
+                    else:
 
-        packet = self.make_packet("start",1,msg)
-        self.send(packet)
 
-        while not self.finished:
-            
-            while self.window_close - self.window_open < 4: #Fills out window
-                self.window_close += 1
-                if self.window_close == self.last_packet:
-                    msg = self.infile.read(self.file_len%1472)
-                    packet = self.make_packet("end",self.window_close,msg)
-                    self.send(packet)
-                elif self.window_close<self.last_packet:
-                    msg = self.infile.read(self.file_len)
-                    packet = self.make_packet("data",self.window_close,msg)
-                    self.send(packet)
-                else:
-                    #trigger resend?
 
-            rcv = self.recieve(500)
-            if rcv = None:
-                self.handle_timeout()
-            else:
-                if rcv == self.last_packet:
-                    self.finished = True
 
-                elif self.current_ack[0] == rcv:
-                    self.handle_dup_ack()
-                    
-                else:
-                    self.handle_new_ack()
-                    
 
-        #raise NotImplementedError
+
+
+
+
+
+    def handle_response(self, response_packet):
+        pass
 
     def handle_timeout(self):
         #resend
