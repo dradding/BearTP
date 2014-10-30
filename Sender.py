@@ -12,7 +12,7 @@ class Sender(BasicSender.BasicSender):
         super(Sender, self).__init__(dest, port, filename, debug)
         if sackMode:
             raise NotImplementedError #remove this line when you implement SACK
-        self.file_len = len(self.infile)
+        #self.file_len = len(self.infile)
         self.window_base = 0
         self.window_max = 4
         #self.max_seqno = self.file_len/1472
@@ -24,7 +24,7 @@ class Sender(BasicSender.BasicSender):
     def start(self):
         message = "start"
         seqno = 0
-        data = self.infile.read(self.file_len % 1472)
+        data = self.infile.read(1472)
         #if (max_seqno == 0): #the size of the file can be handled in one send call
             #data = self.infile.read(self.file_len % 1472)
         if (len(data) < 1472):
@@ -36,15 +36,15 @@ class Sender(BasicSender.BasicSender):
         else:
             #data = self.infile.read(1472)
             while not message == "end":
-                for i in range(window_base, window_max + 1):
+                for i in range(self.window_base, self.window_max + 1):
                     # if i != max_seqno:
                     #     new_packet = self.make_packet(message, seqno, data)
                     #     window[i] = new_packet
                     #     self.send(new_packet)
 
-                    if (not i  in window.keys() and not i  > max_seqno):
+                    if not i  in self.window.keys():
                         new_packet = self.make_packet(message, i, data)
-                        window[i] = new_packet
+                        self.window[i] = new_packet
                         self.send(new_packet)
                         data = self.infile.read(1472)
                     if (len(data) < 1472):
@@ -60,6 +60,7 @@ class Sender(BasicSender.BasicSender):
         else:
             if Checksum.validate_checksum(response_packet):
                 msg_type, seqno, data, checksum = self.split_packet(response_packet)
+                seqno = int(seqno)
                 if seqno > self.current_ack[0]:
                     self.handle_new_ack(seqno)
                 if seqno == self.current_ack[0]:
@@ -69,12 +70,15 @@ class Sender(BasicSender.BasicSender):
         self.send(self.window[self.window_base])
 
     def handle_new_ack(self, ack):
-        self.window_base = seqno
-        self.window_max = seqno + 4
-        self.current_ack = [seqno, 1]
+        self.window_base = ack
+        self.window_max = ack + 4
+        self.current_ack = [ack, 1]
+        to_delete = []
         for key in self.window:
             if key < self.window_base:
-                del self.window[key]
+                to_delete.append(key)
+        for key in to_delete:
+            del self.window[key]
 
     def handle_dup_ack(self, ack):
         self.current_ack[1] += 1
