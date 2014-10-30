@@ -15,7 +15,7 @@ class Sender(BasicSender.BasicSender):
         self.file_len = len(self.infile)
         self.window_base = 0
         self.window_max = 4
-        self.max_seqno = self.file_len/1472
+        #self.max_seqno = self.file_len/1472
         self.current_ack = [-1,-1] #[seqno, repitions]
         self.window = {}
 
@@ -24,37 +24,33 @@ class Sender(BasicSender.BasicSender):
     def start(self):
         message = "start"
         seqno = 0
-        if (max_seqno == 0): #the size of the file can be handled in one send call
-            data = self.infile.read(self.file_len % 1472)
+        data = self.infile.read(self.file_len % 1472)
+        #if (max_seqno == 0): #the size of the file can be handled in one send call
+            #data = self.infile.read(self.file_len % 1472)
+        if (len(data) < 1472):
             new_packet = self.make_packet(message, seqno, data)
             self.send(new_packet)
             response = self.receive(500)
             handle_response(response)
 
         else:
-            data = self.infile.read(1472)
-            self.make_packet(message, seqno, None) #send start message first 
-            self.send(new_packet)
-            response = self.receive(500)
-            handle_response(response)
-            message = "data"
-            seqno +=1
+            #data = self.infile.read(1472)
             while not message == "end":
                 for i in range(window_base, window_max + 1):
                     # if i != max_seqno:
                     #     new_packet = self.make_packet(message, seqno, data)
                     #     window[i] = new_packet
                     #     self.send(new_packet)
-                    if (i == max_seqno):
-                        message = "end"
-                    if (not i  in window.keys() && not i  > max_seqno):
+
+                    if (not i  in window.keys() and not i  > max_seqno):
                         new_packet = self.make_packet(message, i, data)
                         window[i] = new_packet
                         self.send(new_packet)
-                        if (i+1 == max_seqno):
-                            data = self.infile.read(self.file_len % 1472)
-                        else:
-                            data = self.infile.read(1472)
+                        data = self.infile.read(1472)
+                    if (len(data) < 1472):
+                        message = "end"
+                    else:
+                        message = "data"
                 response = self.receive(500)
                 self.handle_response(response)
 
