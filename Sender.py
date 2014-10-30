@@ -60,7 +60,7 @@ class Sender(BasicSender.BasicSender):
 
     def handle_response(self, response_packet):
         if response_packet == None:           
-            self.handle_timeout
+            self.handle_timeout()
         else:
             if Checksum.validate_checksum(response_packet):
                 msg_type, seqno, data, checksum = self.split_packet(response_packet)
@@ -73,8 +73,12 @@ class Sender(BasicSender.BasicSender):
         self.send(self.window[self.window_base])
 
     def handle_new_ack(self, ack):
-        self.window_open = 106
-        self.current_ack = [rcv, 1]
+        self.window_base = seqno
+        self.window_max = seqno + 4
+        self.current_ack = [seqno, 1]
+        for key in self.window:
+            if key < self.window_base:
+                del self.window[key]
 
     def handle_dup_ack(self, ack):
         self.current_ack[1] += 1
