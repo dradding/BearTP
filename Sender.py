@@ -88,15 +88,20 @@ class Sender(BasicSender.BasicSender):
         info = sack.split(";")
         if info[1] == '':
             info.remove('')
+            self.current_sack = []
+        else:
+            sacks = info[1].split(",")
+            sacks = map(int, sacks)
+            self.current_sack = sacks
         print info
-        info = map(int, info)
-        self.current_sack = info
-        self.current_cum_ack = info[0]
-        self.send(self.window[self.current_cum_ack])
-        if len(info)> 1:
-            sacks = info[1:]
+        self.current_cum_ack = int(info[0])
+        if self.current_cum_ack in self.window:
+            self.send(self.window[self.current_cum_ack])
+        self.window_base = self.current_cum_ack
+        self.window_max = self.current_cum_ack + 4
+        if len(self.current_sack)> 1:
             for key in self.window:
-                if not key in sacks:
+                if not key in self.sacks:
                     self.send(self.window[key])
 
     def handle_timeout(self):
