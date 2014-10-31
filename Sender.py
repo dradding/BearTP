@@ -77,7 +77,7 @@ class Sender(BasicSender.BasicSender):
                 self.handle_sack(seqno)
             else:
                 seqno = int(seqno)
-                print seqno
+                #print seqno
                 if seqno > self.current_ack[0]:
                     self.handle_new_ack(seqno)
                 if seqno == self.current_ack[0]:
@@ -96,16 +96,32 @@ class Sender(BasicSender.BasicSender):
         print info
         self.current_cum_ack = int(info[0])
         if self.current_cum_ack in self.window:
+            print "current_cum_ack request met!"
             self.send(self.window[self.current_cum_ack])
         self.window_base = self.current_cum_ack
         self.window_max = self.current_cum_ack + 4
+        print "window_base: "
+        print self.window_base
+        print self.window.keys()
         if len(self.current_sack)> 1:
             for key in self.window:
                 if not key in self.current_sack:
                     self.send(self.window[key])
+        to_delete = []
+        for key in self.window:
+            if key < self.window_base:
+                to_delete.append(key)
+        for key in to_delete:
+            del self.window[key]
 
     def handle_timeout(self):
-        self.send(self.window[self.window_base])
+        if self.sackMode:
+            for i in self.window:
+                if (not i in self.current_sack):
+                    print "Sack timeout handled"
+                    self.send(self.window[i])
+        else:
+            self.send(self.window[self.window_base])
         print "resend due to timeout"
 
     def handle_new_ack(self, ack):
