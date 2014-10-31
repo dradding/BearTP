@@ -105,7 +105,14 @@ class Sender(BasicSender.BasicSender):
                     self.send(self.window[key])
 
     def handle_timeout(self):
-        self.send(self.window[self.window_base])
+        if self.sackMode:
+            for i in range(self.window_base, self.window_max + 1):
+                if (not i in self.current_sack):
+                    self.send(self.window[i])
+
+
+        else:
+            self.send(self.window[self.window_base])
         print "resend due to timeout"
 
     def handle_new_ack(self, ack):
