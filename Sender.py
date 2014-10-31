@@ -8,11 +8,12 @@ import BasicSender
 This is a skeleton sender class. Create a fantastic transport protocol here.
 '''
 class Sender(BasicSender.BasicSender):
-    def __init__(self, dest, port, filename, debug=True, sackMode=False):
+    def __init__(self, dest, port, filename, debug=True, sackMode=True):
         super(Sender, self).__init__(dest, port, filename, debug)
-        if sackMode:
-            raise NotImplementedError #remove this line when you implement SACK
+        # if sackMode:
+        #     raise NotImplementedError #remove this line when you implement SACK
         #self.file_len = len(self.infile)
+        self.sackMode = sackMode
         self.window_base = 0
         self.window_max = 4
         #self.max_seqno = self.file_len/1472
@@ -68,9 +69,11 @@ class Sender(BasicSender.BasicSender):
         if response_packet == None:           
             self.handle_timeout()
             # return False
-        else:
-            if Checksum.validate_checksum(response_packet):
-                msg_type, seqno, data, checksum = self.split_packet(response_packet)
+        if Checksum.validate_checksum(response_packet):
+            msg_type, seqno, data, checksum = self.split_packet(response_packet)
+            if self.sackMode:
+                self.handle_sack(seqno)
+            else:
                 seqno = int(seqno)
                 print seqno
                 if seqno > self.current_ack[0]:
@@ -78,6 +81,15 @@ class Sender(BasicSender.BasicSender):
                 if seqno == self.current_ack[0]:
                     self.handle_dup_ack(seqno)
             # return True
+
+    def handle_sack(self, sack):
+        info = sack.split(";")
+        cum_ack = info[0]
+        sacks = info[1:]
+        self.send(self.window[cum_ack])
+        for key in self.window:
+            if not key in sacks:
+                self.send(self.window[key])
 
     def handle_timeout(self):
         self.send(self.window[self.window_base])
@@ -100,7 +112,7 @@ class Sender(BasicSender.BasicSender):
 
     def handle_dup_ack(self, ack):
         self.current_ack[1] += 1
-        if self.current_ack[1] >= 3:
+        if self.current_ack[1] >= 4:
             self.send(self.window[ack])
             print "resend due to dup ack"
 
