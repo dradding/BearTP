@@ -101,7 +101,7 @@ class Sender(BasicSender.BasicSender):
         self.window_max = self.current_cum_ack + 4
         if len(self.current_sack)> 1:
             for key in self.window:
-                if not key in self.sacks:
+                if not key in self.current_sack:
                     self.send(self.window[key])
 
     def handle_timeout(self):
