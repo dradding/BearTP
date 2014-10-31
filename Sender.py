@@ -18,6 +18,7 @@ class Sender(BasicSender.BasicSender):
         self.window_max = 4
         #self.max_seqno = self.file_len/1472
         self.current_ack = [-1,-1] #[seqno, repitions]
+        self.current_cum_ack = -1
         self.current_sack = []
         self.window = {}
 
@@ -89,8 +90,9 @@ class Sender(BasicSender.BasicSender):
             info.remove('')
         print info
         info = map(int, info)
-        cum_ack = info[0]
-        self.send(self.window[cum_ack])
+        self.current_sack = info
+        self.current_cum_ack = info[0]
+        self.send(self.window[self.current_cum_ack])
         if len(info)> 1:
             sacks = info[1:]
             for key in self.window:
