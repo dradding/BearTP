@@ -18,6 +18,7 @@ class Sender(BasicSender.BasicSender):
         self.window_max = 4
         #self.max_seqno = self.file_len/1472
         self.current_ack = [-1,-1] #[seqno, repitions]
+        self.current_sack = []
         self.window = {}
 
 
@@ -84,12 +85,17 @@ class Sender(BasicSender.BasicSender):
 
     def handle_sack(self, sack):
         info = sack.split(";")
+        if info[1] == '':
+            info.remove('')
+        print info
+        info = map(int, info)
         cum_ack = info[0]
-        sacks = info[1:]
         self.send(self.window[cum_ack])
-        for key in self.window:
-            if not key in sacks:
-                self.send(self.window[key])
+        if len(info)> 1:
+            sacks = info[1:]
+            for key in self.window:
+                if not key in sacks:
+                    self.send(self.window[key])
 
     def handle_timeout(self):
         self.send(self.window[self.window_base])
